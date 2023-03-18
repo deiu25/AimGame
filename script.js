@@ -27,7 +27,7 @@ timeList.addEventListener("click", (event) => {
 
 board.addEventListener("click", (event) => {
   if (event.target.classList.contains("circle")) {
-    event.target.addEventListener("click", changeColor);
+    event.target.removeEventListener("click", changeColor);
     score++;
     event.target.remove();
     createRandomCircle();
@@ -96,16 +96,29 @@ function createRandomCircle() {
   const x = getRandomNumber(0, width - size);
   const y = getRandomNumber(0, height - size);
   circle.classList.add("circle");
-  circle.setAttribute("id", "color");
+  circle.style.background = randomHexColor();
+  circle.setAttribute("data-id", Date.now()); // adaugam un data-id unic pentru cerc
 
   circle.style.width = `${size}px`;
   circle.style.height = `${size}px`;
   circle.style.top = `${y}px`;
   circle.style.left = `${x}px`;
 
-  circle.addEventListener("click", changeColor);
   board.append(circle);
 }
+
+board.addEventListener("click", (event) => {
+  const circle = event.target.closest(".circle");
+  if (circle) {
+    if (
+      circle.getAttribute("data-id") === board.getAttribute("data-current-id")
+    ) {
+      score++;
+      circle.remove();
+      createRandomCircle();
+    }
+  }
+});
 
 function randomInteger(max) {
   return Math.floor(Math.random() * (max + 1));
@@ -119,21 +132,25 @@ function randomRgbColor() {
 }
 
 function randomHexColor() {
-  let [r, g, b] = randomRgbColor();
-
-  let hr = r.toString(16).padStart(2, "0");
-  let hg = g.toString(16).padStart(2, "0");
-  let hb = b.toString(16).padStart(2, "0");
-
-  return "#" + hr + hg + hb;
+  const grayThreshold = 50; // pragul pentru a decide dacă o culoare este apropiată de gri
+  let rgb;
+  let hex;
+  do {
+    // Generăm o culoare aleatoare
+    rgb = [
+      Math.floor(Math.random() * 256),
+      Math.floor(Math.random() * 256),
+      Math.floor(Math.random() * 256),
+    ];
+    hex =
+      "#" + rgb.map((value) => value.toString(16).padStart(2, "0")).join("");
+  } while (Math.max(...rgb) - Math.min(...rgb) <= grayThreshold);
+  return hex;
 }
 
 function changeColor() {
   let hex = randomHexColor();
-  const randomCircle = document.getElementById("color");
-  if (randomCircle) {
-    randomCircle.style.background = hex;
-  }
+  this.style.background = hex;
 }
 
 function clickHandler(event) {
